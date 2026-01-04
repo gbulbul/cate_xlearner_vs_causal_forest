@@ -13,9 +13,9 @@ The primary outcome is the **diabetes progression score**, a continuous numeric 
 > No rescaling or unit transformation was applied in this analysis.
 
 Formally, the observed outcome for individual *i* is defined as:
-\[
+$$
 Y_i \in \mathbb{R}
-\]
+$$
 
 ---
 
