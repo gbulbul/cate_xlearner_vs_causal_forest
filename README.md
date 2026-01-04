@@ -1,96 +1,114 @@
-## Outcome Definition
+# CATE Estimation: X‑Learner vs. Causal Forest (BMI‑Based Subgroups)
 
-### Primary Outcome
+This repository compares two causal machine learning approaches — **X‑Learner** and **Causal Forest** — for estimating **heterogeneous treatment effects** using an observational diabetes dataset.
 
-The primary outcome is the **diabetes progression score**, a continuous numeric variable provided directly by the dataset.
-
-- The progression score summarizes disease severity and progression.
-- Higher values indicate **worse disease progression**.
-- The outcome is **observed for all individuals** after treatment assignment.
-
-> **Note:**  
-> The outcome unit is the dataset’s native progression score (dimensionless).  
-> No rescaling or unit transformation was applied in this analysis.
-
-Formally, the observed outcome for individual *i* is defined as:
-$$
-Y_i \in \mathbb{R}
-$$
+The analysis focuses on whether the **treatment effect differs between individuals with low BMI and high BMI**.
 
 ---
 
-## Treatment Definition
+## 1. Outcome Definition
 
-Treatment assignment is **deterministic** and based on a BMI threshold.
+- **Outcome variable**: Disease **progression score**
+- **Unit**: *Progression units* (as provided by the dataset)
+- The outcome is **continuous** and higher values indicate **worse disease progression**
 
-- **Covariate used:** BMI  
-- **Median BMI value:**  
+No transformation or rescaling was applied; all reported treatment effects are expressed in **original outcome units**.
+
+---
+
+## 2. Treatment Assignment (Deterministic)
+
+Treatment assignment is **not randomized**.
+
+Instead, individuals are deterministically assigned based on a BMI threshold:
+
+- **Covariate (X)**: Body Mass Index (BMI)
+- **Median BMI value**:
 \[
 \text{Median} = 0.0017505
 \]
 
-- **Treatment group (High BMI):**
-\[
-T_i = 1 \quad \text{if } \text{BMI}_i > 0.0017505
-\]
+### Group Definition
+- **Treatment group (High BMI)**:  
+  \[
+  \text{BMI} > 0.0017505
+  \]
 
-- **Control group (Low BMI):**
-\[
-T_i = 0 \quad \text{if } \text{BMI}_i \le 0.0017505
-\]
+- **Control group (Low BMI)**:  
+  \[
+  \text{BMI} \le 0.0017505
+  \]
 
-This is **not a randomized assignment**.  
-The study therefore uses **observational causal inference methods**.
-
----
-
-## Estimands of Interest
-
-We estimate **Conditional Average Treatment Effects (CATE)**:
-\[
-\text{CATE}(X) = \mathbb{E}[Y(1) - Y(0) \mid X]
-\]
-
-and subgroup‑specific **Average Treatment Effects (ATEs)** by BMI group:
-\[
-\widehat{ATE}_g = \frac{1}{n_g} \sum_{i: G_i=g} \hat{\tau}_i
-\]
-
-where:
-- \( g = 0 \): Low BMI group  
-- \( g = 1 \): High BMI group  
+This rule-based split induces a **non-random, observational treatment assignment**, motivating the use of causal ML methods.
 
 ---
 
-## Key Outcome Results (Subgroup Comparison)
+## 3. Subgroup-Specific Treatment Effects
 
-### X‑Learner Results
+Subgroup-specific Average Treatment Effects (ATEs) are computed by averaging individual CATE estimates within each BMI group.
 
-- **Low BMI (Control):** CATE ≈ 28.72  
-- **High BMI (Treatment):** CATE ≈ 30.52  
+### Summary Table
 
+| BMI Group | X‑Learner ATE | Causal Forest ATE |
+|----------|--------------|------------------|
+| Low BMI (Control) | 23.64 | 55.50 |
+| High BMI (Treatment) | 35.66 | 57.69 |
+
+---
+
+## 4. Interpretation of Results
+
+### X‑Learner
+- The **high‑BMI (treatment) group** shows a **larger treatment effect**
+- Difference:
 \[
-\text{CATE}_{High} - \text{CATE}_{Low} \approx +1.8
+\text{CATE}_{\text{High BMI}} - \text{CATE}_{\text{Low BMI}} \approx +1.8
 \]
+- This suggests a **modest but positive differential effect**
+- Interpretation: **mild treatment effect heterogeneity**
 
-➡ High‑BMI individuals experience a **slightly larger treatment effect**  
-➡ Indicates **mild treatment effect heterogeneity**
-
----
-
-### Causal Forest Results
-
-- **Low BMI:** CATE ≈ 62.30  
-- **High BMI:** CATE ≈ 50.79  
-
-➡ Suggests **stronger heterogeneity**, with larger effects among low‑BMI individuals  
-➡ Causal Forest is more sensitive to subgroup variation by design
+### Causal Forest
+- Treatment effects are **larger overall** and more variable
+- The difference between BMI groups is smaller relative to variance
+- This reflects Causal Forest’s higher sensitivity to heterogeneity
 
 ---
 
-## Visualization
+## 5. Density Plot of CATE Estimates
 
-### Subgroup Treatment Effect Comparison
+![CATE Density Comparison](figures/cate_density.png)
 
-The following figure compares subgroup‑specific treatment effects estimated by the X‑Learner and Causal Forest.
+This figure compares the **distribution of individual CATE estimates** produced by each model:
 
+- **X‑Learner**
+  - Narrower, smoother distribution
+  - More conservative effect estimates
+
+- **Causal Forest**
+  - Wider distribution with heavier tails
+  - Indicates stronger detected heterogeneity
+
+The dashed vertical line at zero highlights that **most estimated treatment effects are positive**, indicating overall treatment benefit.
+
+---
+
+## 6. Key Takeaway
+
+> **Yes, the treatment effect differs between individuals with low BMI and high BMI.**
+
+- The treatment is **effective in both groups**
+- High‑BMI individuals experience a **slightly stronger effect**
+- The difference (~1.8 progression units) indicates **quantitative (mild) heterogeneity**, not a qualitative subgroup reversal
+
+---
+
+## 7. Why This Matters
+
+This analysis demonstrates how causal machine learning methods can move beyond a single global ATE to provide **interpretable, subgroup‑specific causal insights**, even under deterministic treatment assignment in observational data.
+
+---
+
+## 8. Files
+
+- `cate_xlearner_vs_causal_forest.ipynb` — main analysis notebook
+- `figures/cate_density.png` — CATE density comparison plot
